@@ -7,6 +7,11 @@ namespace Directory_Sorter
 {
     class Sorting
     {
+        private static int filesFound = 0;
+        private static int filesMoved = 0;
+        private static int errors = 0;
+        public static bool verbose = false;
+
         public static List<string> knownFileTypes;
         public static List<string> imageFileTypes;
         public static List<string> audioFileTypes;
@@ -25,6 +30,8 @@ namespace Directory_Sorter
             audioFileTypes = new List<string>();
             videoFileTypes = new List<string>();
             shortcutFileTypes = new List<string>();
+            archiveFileTypes = new List<string>();
+            executableFileTypes = new List<string>();
             textFileTypes = new List<string>();
 
             #region Image Files
@@ -63,6 +70,8 @@ namespace Directory_Sorter
             audioFileTypes.Add(".org");
             audioFileTypes.Add(".wav");
             audioFileTypes.Add(".wma");
+            audioFileTypes.Add(".mid");
+            audioFileTypes.Add(".midi");
             #endregion
 
             #region Video Files
@@ -124,16 +133,86 @@ namespace Directory_Sorter
 
         public static void DefaultSort(string directoryPath)
         {
+            if(verbose == true)
+            {
+                Console.WriteLine("Enumerating files...");
+            }
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
-                if(IsImage(filePath))
+                if (verbose == true)
                 {
-                    File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+                    filesFound++;
+                    Console.WriteLine($"Found file: {filePath}");
                 }
 
-                if()
+                if (IsImage(filePath))
+                {
+                    try
+                    {
+                        if (verbose == true)
+                        {
+                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}");
+                        }
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+                        filesMoved++;
+                        break;
+                    }
+                    catch(Exception e)
+                    {
+                        errors++;
+                        Console.WriteLine(e.Message);
+                        break;
+                    }
+                }
+
+                if (IsAudio(filePath))
+                {
+                    try
+                    {
+                        if (verbose == true)
+                        {
+                            Console.WriteLine($"File is an audio file, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyMusic)}");
+                        }
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+                        filesMoved++;
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        errors++;
+                        Console.WriteLine(e.Message);
+                        break;
+                    }
+                }
+
+                if (IsVideo(filePath))
+                {
+                    try
+                    {
+                        if (verbose == true)
+                        {
+                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)}");
+                        }
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyVideos));
+                        filesMoved++;
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        errors++;
+                        Console.WriteLine(e.Message);
+                        break;
+                    }
+                }
+
             }
+            Console.WriteLine("Done'd.");
+            Console.WriteLine($"Files found: {filesFound}");
+            Console.WriteLine($"Files moved: {filesMoved}");
+            Console.WriteLine($"Errors moving files: {errors}");
+            Console.WriteLine("Press any key to return.");
             Console.ReadKey();
+            MainClass.DirectoryQuery();
         }
 
         public static void IsolateSort(string directoryPath)
@@ -201,9 +280,21 @@ namespace Directory_Sorter
             return false;
         }
 
-        public static bool IsVideo(string filePath)
+        public static bool IsExecutable(string filePath)
         {
-            foreach (string fileType in videoFileTypes)
+            foreach (string fileType in executableFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsText(string filePath)
+        {
+            foreach (string fileType in textFileTypes)
             {
                 if (filePath.EndsWith(fileType))
                 {
