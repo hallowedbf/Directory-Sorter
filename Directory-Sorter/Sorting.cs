@@ -12,6 +12,10 @@ namespace Directory_Sorter
         public static List<string> audioFileTypes;
         public static List<string> videoFileTypes;
         public static List<string> shortcutFileTypes;
+        public static List<string> archiveFileTypes;
+        public static List<string> executableFileTypes;
+        public static List<string> textFileTypes;
+
         public static void Initialize()
         {
             Console.Clear();
@@ -21,6 +25,7 @@ namespace Directory_Sorter
             audioFileTypes = new List<string>();
             videoFileTypes = new List<string>();
             shortcutFileTypes = new List<string>();
+            textFileTypes = new List<string>();
 
             #region Image Files
             imageFileTypes.Add(".jpg");
@@ -85,10 +90,35 @@ namespace Directory_Sorter
             videoFileTypes.Add(".f4a");
             videoFileTypes.Add(".f4b");
             #endregion
+
             #region Shortcut Files
             shortcutFileTypes.Add(".lnk");
             shortcutFileTypes.Add(".url");
             #endregion
+
+            #region Compressed Files
+            archiveFileTypes.Add(".zip");
+            archiveFileTypes.Add(".7z");
+            archiveFileTypes.Add(".rar");
+            archiveFileTypes.Add(".tar");
+            archiveFileTypes.Add(".gz");
+            archiveFileTypes.Add(".tar.gz");
+            #endregion
+
+            #region Executable Files
+            executableFileTypes.Add(".exe");
+            executableFileTypes.Add(".jar");
+            executableFileTypes.Add(".dll");
+            executableFileTypes.Add(".com");
+            #endregion
+
+            #region Text Files
+            textFileTypes.Add(".txt");
+            textFileTypes.Add(".doc");
+            textFileTypes.Add(".asc");
+            textFileTypes.Add(".docx");
+            #endregion
+
             Console.Clear();
         }
 
@@ -96,7 +126,12 @@ namespace Directory_Sorter
         {
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
-                
+                if(IsImage(filePath))
+                {
+                    File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+                }
+
+                if()
             }
             Console.ReadKey();
         }
@@ -108,7 +143,74 @@ namespace Directory_Sorter
 
         public static bool IsImage(string filePath)
         {
-            return true;
+            foreach(string fileType in imageFileTypes)
+            {
+                if(filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsAudio(string filePath)
+        {
+            foreach (string fileType in audioFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsVideo(string filePath)
+        {
+            foreach (string fileType in videoFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsShortcut(string filePath)
+        {
+            foreach (string fileType in shortcutFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsArchive(string filePath)
+        {
+            foreach (string fileType in archiveFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsVideo(string filePath)
+        {
+            foreach (string fileType in videoFileTypes)
+            {
+                if (filePath.EndsWith(fileType))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
