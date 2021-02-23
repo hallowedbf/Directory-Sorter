@@ -21,6 +21,8 @@ namespace Directory_Sorter
         public static List<string> executableFileTypes;
         public static List<string> textFileTypes;
 
+        //this is where we will store where the user decides they want specific file types to go
+        //key is file type, value is where that file type should go
         public static Dictionary<string, string> customFileTypeLocations = new Dictionary<string, string>();
 
         public static void Initialize()
@@ -225,6 +227,12 @@ namespace Directory_Sorter
                         Console.WriteLine(e.Message);
                         break;
                     }
+                }
+
+                if(IsExecutable(filePath))
+                {
+                    Console.WriteLine("File is an executable, where would you like to store it?");
+                    Console.WriteLine("Enter a full path to the directory. This will be remembered for future executables.");
                 }
 
             }
