@@ -10,7 +10,7 @@ namespace Directory_Sorter
         private static int filesFound = 0;
         private static int filesMoved = 0;
         private static int errors = 0;
-        public static bool verbose = false;
+        public static bool verbose = true;
 
         public static List<string> knownFileTypes;
         public static List<string> imageFileTypes;
@@ -20,6 +20,8 @@ namespace Directory_Sorter
         public static List<string> archiveFileTypes;
         public static List<string> executableFileTypes;
         public static List<string> textFileTypes;
+
+        public static Dictionary<string, string> customFileTypeLocations = new Dictionary<string, string>();
 
         public static void Initialize()
         {
@@ -142,7 +144,7 @@ namespace Directory_Sorter
                 if (verbose == true)
                 {
                     filesFound++;
-                    Console.WriteLine($"Found file: {filePath}");
+                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)}");
                 }
 
                 if (IsImage(filePath))
@@ -153,7 +155,7 @@ namespace Directory_Sorter
                         {
                             Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}");
                         }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures));
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + $@"\{Path.GetFileName(filePath)}");
                         filesMoved++;
                         break;
                     }
@@ -173,7 +175,7 @@ namespace Directory_Sorter
                         {
                             Console.WriteLine($"File is an audio file, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyMusic)}");
                         }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) + $@"\{Path.GetFileName(filePath)}");
                         filesMoved++;
                         break;
                     }
@@ -193,7 +195,27 @@ namespace Directory_Sorter
                         {
                             Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)}");
                         }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyVideos));
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyVideos) + $@"\{Path.GetFileName(filePath)}");
+                        filesMoved++;
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        errors++;
+                        Console.WriteLine(e.Message);
+                        break;
+                    }
+                }
+
+                if (IsText(filePath))
+                {
+                    try
+                    {
+                        if (verbose == true)
+                        {
+                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}");
+                        }
+                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + $@"\{Path.GetFileName(filePath)}");
                         filesMoved++;
                         break;
                     }
@@ -210,6 +232,9 @@ namespace Directory_Sorter
             Console.WriteLine($"Files found: {filesFound}");
             Console.WriteLine($"Files moved: {filesMoved}");
             Console.WriteLine($"Errors moving files: {errors}");
+            filesFound = 0;
+            filesMoved = 0;
+            errors = 0;
             Console.WriteLine("Press any key to return.");
             Console.ReadKey();
             MainClass.DirectoryQuery();
