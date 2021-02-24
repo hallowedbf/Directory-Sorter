@@ -7,35 +7,42 @@ namespace Directory_Sorter
 {
     class Sorting
     {
-        private static int filesFound = 0;
-        private static int filesMoved = 0;
-        private static int errors = 0;
+        static int filesFound = 0;
+        static int filesMoved = 0;
+        static int errors = 0;
         public static bool verbose = true;
 
-        public static List<string> knownFileTypes;
-        public static List<string> imageFileTypes;
-        public static List<string> audioFileTypes;
-        public static List<string> videoFileTypes;
-        public static List<string> shortcutFileTypes;
-        public static List<string> archiveFileTypes;
-        public static List<string> executableFileTypes;
-        public static List<string> textFileTypes;
+        static string myDocuments;
+        static string myPictures;
+        static string myMusic;
+        static string myVideos;
+        static string desktop;
+
+        static List<string> imageFileTypes;
+        static List<string> audioFileTypes;
+        static List<string> videoFileTypes;
+        static List<string> shortcutFileTypes;
+        static List<string> textFileTypes;
 
         //this is where we will store where the user decides they want specific file types to go
         //key is file type, value is where that file type should go
-        public static Dictionary<string, string> customFileTypeLocations = new Dictionary<string, string>();
+        public static Dictionary<string, string> fileTypeLocations = new Dictionary<string, string>();
 
         public static void Initialize()
         {
             Console.Clear();
             Console.WriteLine("Initializing...");
-            knownFileTypes = new List<string>();
+
+            myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            myPictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+            myMusic = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            myVideos = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+
             imageFileTypes = new List<string>();
             audioFileTypes = new List<string>();
             videoFileTypes = new List<string>();
             shortcutFileTypes = new List<string>();
-            archiveFileTypes = new List<string>();
-            executableFileTypes = new List<string>();
             textFileTypes = new List<string>();
 
             #region Image Files
@@ -109,22 +116,6 @@ namespace Directory_Sorter
             shortcutFileTypes.Add(".url");
             #endregion
 
-            #region Compressed Files
-            archiveFileTypes.Add(".zip");
-            archiveFileTypes.Add(".7z");
-            archiveFileTypes.Add(".rar");
-            archiveFileTypes.Add(".tar");
-            archiveFileTypes.Add(".gz");
-            archiveFileTypes.Add(".tar.gz");
-            #endregion
-
-            #region Executable Files
-            executableFileTypes.Add(".exe");
-            executableFileTypes.Add(".jar");
-            executableFileTypes.Add(".dll");
-            executableFileTypes.Add(".com");
-            #endregion
-
             #region Text Files
             textFileTypes.Add(".txt");
             textFileTypes.Add(".doc");
@@ -137,112 +128,76 @@ namespace Directory_Sorter
 
         public static void DefaultSort(string directoryPath)
         {
-            if(verbose == true)
+            for (int i = 0; i < imageFileTypes.Count; i++)
             {
-                Console.WriteLine("Enumerating files...");
+                fileTypeLocations.Add(imageFileTypes[i], myPictures);
             }
+
+            for (int i = 0; i < audioFileTypes.Count; i++)
+            {
+                fileTypeLocations.Add(audioFileTypes[i], myMusic);
+            }
+
+            for (int i = 0; i < videoFileTypes.Count; i++)
+            {
+                fileTypeLocations.Add(videoFileTypes[i], myVideos);
+            }
+
+            for (int i = 0; i < shortcutFileTypes.Count; i++)
+            {
+                fileTypeLocations.Add(shortcutFileTypes[i], desktop);
+            }
+
+            for (int i = 0; i < textFileTypes.Count; i++)
+            {
+                fileTypeLocations.Add(textFileTypes[i], myDocuments);
+            }
+
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
+                filesFound++;
+                string fileExtension = Path.GetExtension(filePath);
+
                 if (verbose == true)
                 {
-                    filesFound++;
+                    Console.WriteLine();
                     Console.WriteLine($"Found file: {Path.GetFileName(filePath)}");
                 }
 
-                if (IsImage(filePath))
+                string pathToMoveTo = null;
+                if (fileTypeLocations.ContainsKey(fileExtension))
                 {
-                    try
+                    fileTypeLocations.TryGetValue(fileExtension, out pathToMoveTo);
+                    if(pathToMoveTo != null)
                     {
-                        if (verbose == true)
-                        {
-                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyPictures)}");
-                        }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyPictures) + $@"\{Path.GetFileName(filePath)}");
-                        filesMoved++;
-                        break;
+                        MoveFile(filePath, pathToMoveTo);
                     }
-                    catch(Exception e)
+                    else
                     {
-                        errors++;
-                        Console.WriteLine(e.Message);
-                        break;
+                        StoreFileTypeQuery(filePath);
                     }
                 }
-
-                if (IsAudio(filePath))
+                else
                 {
-                    try
-                    {
-                        if (verbose == true)
-                        {
-                            Console.WriteLine($"File is an audio file, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyMusic)}");
-                        }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyMusic) + $@"\{Path.GetFileName(filePath)}");
-                        filesMoved++;
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        errors++;
-                        Console.WriteLine(e.Message);
-                        break;
-                    }
-                }
-
-                if (IsVideo(filePath))
-                {
-                    try
-                    {
-                        if (verbose == true)
-                        {
-                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)}");
-                        }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyVideos) + $@"\{Path.GetFileName(filePath)}");
-                        filesMoved++;
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        errors++;
-                        Console.WriteLine(e.Message);
-                        break;
-                    }
-                }
-
-                if (IsText(filePath))
-                {
-                    try
-                    {
-                        if (verbose == true)
-                        {
-                            Console.WriteLine($"File is an image, moving to: {Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}");
-                        }
-                        File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + $@"\{Path.GetFileName(filePath)}");
-                        filesMoved++;
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        errors++;
-                        Console.WriteLine(e.Message);
-                        break;
-                    }
-                }
-
-                if(IsExecutable(filePath))
-                {
-                    Console.WriteLine("File is an executable, where would you like to store it?");
-                    Console.WriteLine("Enter a full path to the directory. This will be remembered for future executables.");
+                    StoreFileTypeQuery(filePath);
                 }
 
             }
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Done'd.");
             Console.WriteLine($"Files found: {filesFound}");
             Console.WriteLine($"Files moved: {filesMoved}");
+            if(errors < 1)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
             Console.WriteLine($"Errors moving files: {errors}");
             filesFound = 0;
             filesMoved = 0;
             errors = 0;
+            fileTypeLocations.Clear();
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Press any key to return.");
             Console.ReadKey();
             MainClass.DirectoryQuery();
@@ -253,88 +208,72 @@ namespace Directory_Sorter
 
         }
 
-        public static bool IsImage(string filePath)
+        public static void CustomSort()
         {
-            foreach(string fileType in imageFileTypes)
-            {
-                if(filePath.EndsWith(fileType))
-                {
-                    return true;
-                }
-            }
-            return false;
+
         }
 
-        public static bool IsAudio(string filePath)
+        public static void StoreFileTypeQuery(string filePath)
         {
-            foreach (string fileType in audioFileTypes)
+            Console.WriteLine();
+            Console.WriteLine($"Not sure where to put files of this type: {Path.GetExtension(filePath)} where would you like to store it?");
+            Console.WriteLine("Enter a full path to the directory. This will be remembered when we come across the same file extension again.");
+            Console.WriteLine();
+            string path = Console.ReadLine();
+            if(Directory.Exists(path))
             {
-                if (filePath.EndsWith(fileType))
-                {
-                    return true;
-                }
+                fileTypeLocations.Add(Path.GetExtension(filePath), path);
+                MoveFile(filePath, path);
             }
-            return false;
+            else
+            {
+                Console.WriteLine("That is not a valid directory.");
+                StoreFileTypeQuery(filePath);
+            }
         }
 
-        public static bool IsVideo(string filePath)
+        public static void MoveUnsureFile(string filePath)
         {
-            foreach (string fileType in videoFileTypes)
+            string fileExtension = Path.GetExtension(filePath);
+            string pathToMoveTo = null;
+            if (fileTypeLocations.ContainsKey(fileExtension))
             {
-                if (filePath.EndsWith(fileType))
+                fileTypeLocations.TryGetValue(fileExtension, out pathToMoveTo);
+                try
                 {
-                    return true;
+                    filesMoved++;
+                    File.Move(filePath, pathToMoveTo);
+                }
+                catch(Exception e)
+                {
+                    errors++;
+                    Console.WriteLine(e.Message);
                 }
             }
-            return false;
+            else
+            {
+                StoreFileTypeQuery(filePath);
+            }
         }
 
-        public static bool IsShortcut(string filePath)
+        public static bool MoveFile(string fileToMove, string destinationDirectory)
         {
-            foreach (string fileType in shortcutFileTypes)
+            try
             {
-                if (filePath.EndsWith(fileType))
+                if(verbose == true)
                 {
-                    return true;
+                    Console.WriteLine($"Moving {Path.GetFileName(fileToMove)} to {destinationDirectory}");
                 }
+                File.Move(fileToMove, destinationDirectory + $@"\{Path.GetFileName(fileToMove)}");
+                filesMoved++;
+                return true;
             }
-            return false;
-        }
-
-        public static bool IsArchive(string filePath)
-        {
-            foreach (string fileType in archiveFileTypes)
+            catch(Exception e)
             {
-                if (filePath.EndsWith(fileType))
-                {
-                    return true;
-                }
+                errors++;
+                Console.WriteLine(e.Message);
+                return false;
             }
-            return false;
-        }
-
-        public static bool IsExecutable(string filePath)
-        {
-            foreach (string fileType in executableFileTypes)
-            {
-                if (filePath.EndsWith(fileType))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public static bool IsText(string filePath)
-        {
-            foreach (string fileType in textFileTypes)
-            {
-                if (filePath.EndsWith(fileType))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 }

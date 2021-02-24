@@ -82,7 +82,7 @@ namespace Directory_Sorter
                 Console.WriteLine("It will take the files it recognizes and try to put them in common sense places like, pictures will go into your");
                 Console.WriteLine("Pictures folder, text files will go into your Documents folder, etc.");
                 Console.WriteLine();
-                Console.WriteLine("If it sees a file that it recognizes and doesn't know where to put it, it will ask you where it put files of that");
+                Console.WriteLine("If it sees a file that it recognizes and/or doesn't know where to put it, it will ask you where it put files of that");
                 Console.WriteLine("type from then on. It will also do this if it comes across a file it does not recognize.");
                 Console.WriteLine("--------------------------------------");
                 Console.WriteLine();
