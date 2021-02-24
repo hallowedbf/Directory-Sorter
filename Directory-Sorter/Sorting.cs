@@ -9,6 +9,7 @@ namespace Directory_Sorter
     {
         static int filesFound = 0;
         static int filesMoved = 0;
+        static int filesIgnored = 0;
         static int errors = 0;
         public static bool verbose = true;
 
@@ -168,13 +169,13 @@ namespace Directory_Sorter
                 if (fileTypeLocations.ContainsKey(fileExtension))
                 {
                     fileTypeLocations.TryGetValue(fileExtension, out pathToMoveTo);
-                    if(pathToMoveTo != null)
+                    if(pathToMoveTo != "DO NOT MOVE")
                     {
                         MoveFile(filePath, pathToMoveTo);
                     }
                     else
                     {
-                        StoreFileTypeQuery(filePath);
+                        filesIgnored++;
                     }
                 }
                 else
@@ -183,29 +184,35 @@ namespace Directory_Sorter
                 }
 
             }
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Done'd.");
-            Console.WriteLine($"Files found: {filesFound}");
-            Console.WriteLine($"Files moved: {filesMoved}");
-            if(errors < 1)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-            }
-            Console.WriteLine($"Errors moving files: {errors}");
-            filesFound = 0;
-            filesMoved = 0;
-            errors = 0;
-            fileTypeLocations.Clear();
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Press any key to return.");
-            Console.ReadKey();
-            MainClass.DirectoryQuery();
+
+            SortingFinished();
         }
 
         public static void IsolateSort(string directoryPath)
         {
+            foreach(string filePath in Directory.EnumerateFiles(directoryPath))
+            {
+                filesFound++;
+                string fileExtension = Path.GetExtension(filePath);
+                string destination = $@"{directoryPath}\{fileExtension} Folder";
 
+                if (verbose == true)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)}");
+                }
+
+                if(Directory.Exists(destination))
+                {
+                    MoveFile(filePath, destination);
+                }
+                else
+                {
+                    Directory.CreateDirectory(destination);
+                    MoveFile(filePath, destination);
+                }
+            }
+            SortingFinished();
         }
 
         public static void CustomSort()
@@ -216,19 +223,46 @@ namespace Directory_Sorter
         public static void StoreFileTypeQuery(string filePath)
         {
             Console.WriteLine();
-            Console.WriteLine($"Not sure where to put files of this type: {Path.GetExtension(filePath)} where would you like to store it?");
-            Console.WriteLine("Enter a full path to the directory. This will be remembered when we come across the same file extension again.");
+            Console.WriteLine($"Not sure where to put files of this type: {Path.GetExtension(filePath)} what would you like to do?");
+            Console.WriteLine($"1. Specify a folder to store it into. | 2. Ignore this particular file. | 3. Ignore ALL files that end with {Path.GetExtension(filePath)}");
             Console.WriteLine();
-            string path = Console.ReadLine();
-            if(Directory.Exists(path))
+            switch(Console.ReadKey().Key)
             {
-                fileTypeLocations.Add(Path.GetExtension(filePath), path);
-                MoveFile(filePath, path);
-            }
-            else
-            {
-                Console.WriteLine("That is not a valid directory.");
-                StoreFileTypeQuery(filePath);
+                case ConsoleKey.D1:
+                    {
+                        Console.WriteLine($"Enter a full path to the directory you want to move all {Path.GetExtension(filePath)} files to from here on.");
+                        Console.WriteLine();
+                        string path = Console.ReadLine();
+                        if (Directory.Exists(path))
+                        {
+                            fileTypeLocations.Add(Path.GetExtension(filePath), path);
+                            MoveFile(filePath, path);
+                        }
+                        else
+                        {
+                            Console.WriteLine("That is not a valid directory.");
+                            StoreFileTypeQuery(filePath);
+                        }
+                        break;
+                    }
+
+                case ConsoleKey.D2:
+                    {
+                        filesIgnored++;
+                        break;
+                    }
+                case ConsoleKey.D3:
+                    {
+                        filesIgnored++;
+                        fileTypeLocations.Add(Path.GetExtension(filePath), "DO NOT MOVE");
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine("That's not a 1, 2, or a 3.");
+                        StoreFileTypeQuery(filePath);
+                        break;
+                    }
             }
         }
 
@@ -274,6 +308,30 @@ namespace Directory_Sorter
                 Console.WriteLine(e.Message);
                 return false;
             }
+        }
+
+        public static void SortingFinished()
+        {
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Done'd.");
+            Console.WriteLine($"Files found: {filesFound}");
+            Console.WriteLine($"Files moved: {filesMoved}");
+            Console.WriteLine($"Files ignored: {filesIgnored}");
+            if (errors < 1)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            Console.WriteLine($"Errors moving files: {errors}");
+            filesFound = 0;
+            filesMoved = 0;
+            filesIgnored = 0;
+            errors = 0;
+            fileTypeLocations.Clear();
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Press any key to return.");
+            Console.ReadKey();
+            MainClass.DirectoryQuery();
         }
     }
 }
