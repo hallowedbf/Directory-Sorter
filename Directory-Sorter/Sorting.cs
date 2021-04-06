@@ -240,8 +240,7 @@ namespace Directory_Sorter
                         }
                         else
                         {
-                            Console.WriteLine("That is not a valid directory.");
-                            StoreFileTypeQuery(filePath);
+                            DirectoryNotFound(filePath, path);
                         }
                         break;
                     }
@@ -263,6 +262,42 @@ namespace Directory_Sorter
                         StoreFileTypeQuery(filePath);
                         break;
                     }
+            }
+        }
+
+        public static void DirectoryNotFound(string filePath, string directory)
+        {
+            Console.WriteLine($"{directory} is not an existing directory.");
+            Console.WriteLine("Would you like to create this directory?");
+            Console.WriteLine();
+            Console.WriteLine("1. Yes | 2. No");
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.D1:
+                    {
+                        if(IsValidPath(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                            MoveFile(filePath, directory);
+                        }
+                        else
+                        {
+                            Console.WriteLine("That is not a valid path.");
+                            StoreFileTypeQuery(filePath);
+                        }
+                        break;
+                    }
+                case ConsoleKey.D2:
+                    {
+                        StoreFileTypeQuery(filePath);
+                        break;
+                    }
+                default:
+                    {
+                        DirectoryNotFound(filePath, directory);
+                        break;
+                    }
+
             }
         }
 
@@ -332,6 +367,32 @@ namespace Directory_Sorter
             Console.WriteLine("Press any key to return.");
             Console.ReadKey();
             MainClass.DirectoryQuery();
+        }
+
+        public static bool IsValidPath(string path, bool allowRelativePaths = false)
+        {
+            bool isValid = true;
+
+            try
+            {
+                string fullPath = Path.GetFullPath(path);
+
+                if (allowRelativePaths)
+                {
+                    isValid = Path.IsPathRooted(path);
+                }
+                else
+                {
+                    string root = Path.GetPathRoot(path);
+                    isValid = string.IsNullOrEmpty(root.Trim(new char[] { '\\', '/' })) == false;
+                }
+            }
+            catch (Exception ex)
+            {
+                isValid = false;
+            }
+
+            return isValid;
         }
     }
 }
