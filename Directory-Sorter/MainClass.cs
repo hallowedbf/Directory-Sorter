@@ -58,6 +58,27 @@ namespace Directory_Sorter
             }
         }
 
+        public static bool RecursiveQuery()
+        {
+            Console.WriteLine();
+            Console.WriteLine($"Would you like the sorting to be recursive?");
+            Console.WriteLine("This will make the program look through all sub-folders inside of the main folder you are wanting to organize.");
+            Console.WriteLine();
+            Console.WriteLine("1. Yes | 2. No");
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.D1:
+                    {
+                        return true;
+                    }
+                case ConsoleKey.D2:
+                    {
+                        return false;
+                    }
+            }
+            return false;
+        }
+
         public static void SortQuery(string directoryPath)
         {
             if(!Sorting.IsValidPath(directoryPath))
@@ -110,12 +131,12 @@ namespace Directory_Sorter
                     {
                         case ConsoleKey.D1:
                             {
-                                Sorting.DefaultSort(directoryPath);
+                                Sorting.StartDefaultSort(directoryPath, RecursiveQuery());
                                 break;
                             }
                         case ConsoleKey.D2:
                             {
-                                Sorting.IsolateSort(directoryPath);
+                                Sorting.StartIsolateSort(directoryPath, RecursiveQuery());
                                 break;
                             }
                         case ConsoleKey.D3:

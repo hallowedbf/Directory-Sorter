@@ -12,6 +12,9 @@ namespace Directory_Sorter
         static int filesIgnored = 0;
         static int errors = 0;
         public static bool verbose = true;
+        public static bool recursive = false;
+
+        public static List<string> recursiveFolderPaths = new List<string>();
 
         static string myDocuments;
         static string myPictures;
@@ -127,7 +130,7 @@ namespace Directory_Sorter
             Console.Clear();
         }
 
-        public static void DefaultSort(string directoryPath)
+        public static void DefaultSortInitialize()
         {
             for (int i = 0; i < imageFileTypes.Count; i++)
             {
@@ -153,7 +156,10 @@ namespace Directory_Sorter
             {
                 fileTypeLocations.Add(textFileTypes[i], myDocuments);
             }
+        }
 
+        public static void DefaultSort(string directoryPath)
+        {
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
                 filesFound++;
@@ -162,14 +168,14 @@ namespace Directory_Sorter
                 if (verbose == true)
                 {
                     Console.WriteLine();
-                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)}");
+                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)} in {Path.GetDirectoryName(filePath)}");
                 }
 
                 string pathToMoveTo = null;
                 if (fileTypeLocations.ContainsKey(fileExtension))
                 {
                     fileTypeLocations.TryGetValue(fileExtension, out pathToMoveTo);
-                    if(pathToMoveTo != "DO NOT MOVE")
+                    if (pathToMoveTo != "DO NOT MOVE")
                     {
                         MoveFile(filePath, pathToMoveTo);
                     }
@@ -184,11 +190,32 @@ namespace Directory_Sorter
                 }
 
             }
+        }
+
+        public static void RecursiveFolderSearch(string directoryPath)
+        {
+            foreach (string directory in Directory.EnumerateDirectories(directoryPath))
+            {
+                recursiveFolderPaths.Add(directory);
+                RecursiveFolderSearch(directory);
+            }
+        }
+
+        public static void StartDefaultSort(string directoryPath, bool recursive)
+        {
+            DefaultSortInitialize();
+
+            DefaultSort(directoryPath);
+
+            if (recursive == true)
+            {
+                RecursiveFolderSearch(directoryPath);
+            }
 
             SortingFinished();
         }
 
-        public static void IsolateSort(string directoryPath)
+        public static void StartIsolateSort(string directoryPath, bool recursive)
         {
             foreach(string filePath in Directory.EnumerateFiles(directoryPath))
             {
