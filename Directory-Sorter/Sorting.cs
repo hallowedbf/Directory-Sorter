@@ -267,37 +267,50 @@ namespace Directory_Sorter
 
         public static void DirectoryNotFound(string filePath, string directory)
         {
-            Console.WriteLine($"{directory} is not an existing directory.");
-            Console.WriteLine("Would you like to create this directory?");
-            Console.WriteLine();
-            Console.WriteLine("1. Yes | 2. No");
-            switch (Console.ReadKey().Key)
+            if(IsValidPath(directory))
             {
-                case ConsoleKey.D1:
-                    {
-                        if(IsValidPath(directory))
+                Console.WriteLine($"{directory} is not an existing directory.");
+                Console.WriteLine("Would you like to create this directory?");
+                Console.WriteLine();
+                Console.WriteLine("1. Yes | 2. No");
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.D1:
                         {
-                            Directory.CreateDirectory(directory);
-                            MoveFile(filePath, directory);
+                            try
+                            {
+                                Directory.CreateDirectory(directory);
+                                MoveFile(filePath, directory);
+                            }
+                            catch(Exception e)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(e.Message);
+                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.WriteLine("Press any key to retry.");
+                                Console.ReadKey();
+                                DirectoryNotFound(filePath, directory);
+                            }
+                            break;
                         }
-                        else
+                    case ConsoleKey.D2:
                         {
-                            Console.WriteLine("That is not a valid path.");
                             StoreFileTypeQuery(filePath);
+                            break;
                         }
-                        break;
-                    }
-                case ConsoleKey.D2:
-                    {
-                        StoreFileTypeQuery(filePath);
-                        break;
-                    }
-                default:
-                    {
-                        DirectoryNotFound(filePath, directory);
-                        break;
-                    }
+                    default:
+                        {
+                            DirectoryNotFound(filePath, directory);
+                            break;
+                        }
 
+                }
+            }
+            else
+            {
+                Console.WriteLine("That is not a valid path.");
+                Console.WriteLine();
+                StoreFileTypeQuery(filePath);
             }
         }
 
@@ -316,7 +329,10 @@ namespace Directory_Sorter
                 catch(Exception e)
                 {
                     errors++;
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(e.Message);
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine("Press any key to continue.");
                 }
             }
             else

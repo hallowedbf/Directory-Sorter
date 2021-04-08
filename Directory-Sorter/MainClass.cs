@@ -60,64 +60,74 @@ namespace Directory_Sorter
 
         public static void SortQuery(string directoryPath)
         {
-            if(!Directory.Exists(directoryPath))
+            if(!Sorting.IsValidPath(directoryPath))
             {
                 Console.WriteLine();
-                Console.WriteLine($"This directory does not exist: {directoryPath}");
+                Console.WriteLine($"This is not a valid path: {directoryPath}");
                 Console.WriteLine("Try checking for any typos.");
                 DirectoryQuery();
             }
             else
             {
-                Console.WriteLine();
-                Console.WriteLine($"Directory found: {directoryPath}");
-                Console.WriteLine();
-                Console.WriteLine("What kind of sorting do you want done?");
-                Console.WriteLine("--------------------------------------");
-                Console.WriteLine();
-                Console.WriteLine("1. Default");
-                Console.WriteLine("For each file in this directory, this will check the file's file extension (.jpg, .mp3, .zip, etc) and attempt to");
-                Console.WriteLine("recognize it from a list of different file types I've hard-coded into the program.");
-                Console.WriteLine();
-                Console.WriteLine("It will take the files it recognizes and try to put them in common sense places like, pictures will go into your");
-                Console.WriteLine("Pictures folder, text files will go into your Documents folder, etc.");
-                Console.WriteLine();
-                Console.WriteLine("If it sees a file that it recognizes and/or doesn't know where to put it, it will ask you where it put files of that");
-                Console.WriteLine("type from then on. It will also do this if it comes across a file it does not recognize.");
-                Console.WriteLine("--------------------------------------");
-                Console.WriteLine();
-                Console.WriteLine("2. Isolate");
-                Console.WriteLine("For each file in this directory, this will check the file's file extension (.jpg, .mp3, .zip, etc) and make a");
-                Console.WriteLine("folder only for files with that exact file extension.");
-                Console.WriteLine();
-                Console.WriteLine("This can be useful for isolating all of the different files you have so you can move specific files you are");
-                Console.WriteLine("looking for out of a large mess.");
-                Console.WriteLine();
-                Console.WriteLine("If you have many different file types in this directory, this will make many different folders to look through");
-                Console.WriteLine("--------------------------------------");
-                Console.WriteLine();
-                Console.WriteLine("3. Go back");
-                switch(Console.ReadKey().Key)
+                if(!Directory.Exists(directoryPath))
                 {
-                    case ConsoleKey.D1:
-                        {
-                            Sorting.DefaultSort(directoryPath);
-                            break;
-                        }
-                    case ConsoleKey.D2:
-                        {
-                            Sorting.IsolateSort(directoryPath);
-                            break;
-                        }
-                    case ConsoleKey.D3:
-                        {
-                            DirectoryQuery();
-                            break;
-                        }
-                    default:
-                        {
-                            break;
-                        }
+                    Console.WriteLine();
+                    Console.WriteLine($"This directory does not exist: {directoryPath}");
+                    Console.WriteLine("Try checking for any typos.");
+                    DirectoryQuery();
+                }
+                else
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Directory found: {directoryPath}");
+                    Console.WriteLine();
+                    Console.WriteLine("What kind of sorting do you want done?");
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine();
+                    Console.WriteLine("1. Default");
+                    Console.WriteLine("For each file in this directory, this will check the file's file extension (.jpg, .mp3, .zip, etc) and attempt to");
+                    Console.WriteLine("recognize it from a list of different file types I've hard-coded into the program.");
+                    Console.WriteLine();
+                    Console.WriteLine("It will take the files it recognizes and try to put them in common sense places like, pictures will go into your");
+                    Console.WriteLine("Pictures folder, text files will go into your Documents folder, etc.");
+                    Console.WriteLine();
+                    Console.WriteLine("If it sees a file that it recognizes and/or doesn't know where to put it, it will ask you where it put files of that");
+                    Console.WriteLine("type from then on. It will also do this if it comes across a file it does not recognize.");
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine();
+                    Console.WriteLine("2. Isolate");
+                    Console.WriteLine("For each file in this directory, this will check the file's file extension (.jpg, .mp3, .zip, etc) and make a");
+                    Console.WriteLine("folder only for files with that exact file extension.");
+                    Console.WriteLine();
+                    Console.WriteLine("This can be useful for isolating all of the different files you have so you can move specific files you are");
+                    Console.WriteLine("looking for out of a large mess.");
+                    Console.WriteLine();
+                    Console.WriteLine("If you have many different file types in this directory, this will make many different folders to look through");
+                    Console.WriteLine("--------------------------------------");
+                    Console.WriteLine();
+                    Console.WriteLine("3. Go back");
+                    switch (Console.ReadKey().Key)
+                    {
+                        case ConsoleKey.D1:
+                            {
+                                Sorting.DefaultSort(directoryPath);
+                                break;
+                            }
+                        case ConsoleKey.D2:
+                            {
+                                Sorting.IsolateSort(directoryPath);
+                                break;
+                            }
+                        case ConsoleKey.D3:
+                            {
+                                DirectoryQuery();
+                                break;
+                            }
+                        default:
+                            {
+                                break;
+                            }
+                    }
                 }
             }
         }
