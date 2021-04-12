@@ -15,11 +15,114 @@ namespace Directory_Sorter
             Sorting.Initialize();
             Console.WriteLine($"Directory-Sorter v{version}");
             Console.WriteLine("___________________________________________");
-            DirectoryQuery();
+            IntroQuery();
+        }
+
+        public static void IntroQuery()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Welcome to Directory-Sorter!");
+            Console.WriteLine("Choose what you would like to do.");
+            Console.WriteLine("1. Sort | 2. Undo last sort | 3. Exit");
+            switch(Console.ReadKey().Key)
+            {
+                case ConsoleKey.D1:
+                    {
+                        DirectoryQuery();
+                        break;
+                    }
+                case ConsoleKey.D2:
+                    {
+                        Sorting.UndoLastSort();
+                        break;
+                    }
+                case ConsoleKey.D3:
+                    {
+                        Environment.Exit(0);
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid input.");
+                        IntroQuery();
+                        break;
+                    }
+            }
+        }
+
+        public static void UndoQuery()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Are you sure that you want to undo the last sort?");
+            Console.WriteLine("This program only remembers the last sort done during this session.");
+            Console.WriteLine("1. Yes | 2. No");
+            switch(Console.ReadKey().Key)
+            {
+                case ConsoleKey.D1:
+                    {
+                        if(Sorting.movedFiles.Count != 0)
+                        {
+                            Sorting.UndoLastSort();
+                        }
+                        else
+                        {
+                            Console.WriteLine("There has been no sorting done this session.");
+                            IntroQuery();
+                        }
+                        break;
+                    }
+                case ConsoleKey.D2:
+                    {
+                        IntroQuery();
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid input.");
+                        UndoQuery();
+                        break;
+                    }
+            }
+        }
+
+        public static void UndoLostWarning()
+        {
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Are you sure you want to start sorting again?");
+            Console.WriteLine("This will overwrite the program's memory of your last sort, meaning you can NOT undo the last sort that was done.");
+            Console.WriteLine("This does not matter if you're fine with the last sort.");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("1. Yes | 2. Cancel");
+            switch (Console.ReadKey().Key)
+            {
+                case ConsoleKey.D1:
+                    {
+                        break;
+                    }
+                case ConsoleKey.D2:
+                    {
+                        IntroQuery();
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid input.");
+                        UndoLostWarning();
+                        break;
+                    }
+            }
         }
 
         public static void DirectoryQuery()
         {
+            if (Sorting.movedFiles.Count != 0)
+            {
+                UndoLostWarning();
+            }
             Console.WriteLine();
             Console.WriteLine("Choose a directory to sort.");
             Console.WriteLine("You will get to choose how you want the directory sorted before anything is moved.");
@@ -51,7 +154,7 @@ namespace Directory_Sorter
                 default:
                     {
                         Console.WriteLine();
-                        Console.WriteLine("That's not a 1, 2, 3, or a 4. I am sad now.");
+                        Console.WriteLine("Invalid input.");
                         DirectoryQuery();
                         break;
                     }
@@ -146,6 +249,9 @@ namespace Directory_Sorter
                             }
                         default:
                             {
+                                Console.WriteLine();
+                                Console.WriteLine("Invalid input.");
+                                SortQuery(directoryPath);
                                 break;
                             }
                     }

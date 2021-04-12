@@ -108,6 +108,7 @@ namespace Directory_Sorter
             videoFileTypes.Add(".mpeg");
             videoFileTypes.Add(".mpe");
             videoFileTypes.Add(".mpv");
+            videoFileTypes.Add(".mp4");
             videoFileTypes.Add(".m2v");
             videoFileTypes.Add(".m4v");
             videoFileTypes.Add(".3gp");
@@ -231,6 +232,11 @@ namespace Directory_Sorter
         {
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
+                if (movedFiles.ContainsKey(filePath))
+                {
+                    break;
+                }
+
                 filesFound++;
                 string fileExtension = Path.GetExtension(filePath);
                 string destination = $@"{directoryPath}\{fileExtension} Folder";
@@ -284,17 +290,51 @@ namespace Directory_Sorter
 
         }
 
-        public static void UndoSort()
+        public static void UndoLastSort()
         {
             string originalFilePath;
+            if(movedFiles.Count() == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("No files have been sorted!");
+                MainClass.IntroQuery();
+            }
             foreach(string movedFile in movedFiles.Keys)
             {
                 movedFiles.TryGetValue(movedFile, out originalFilePath);
                 if(originalFilePath != null)
                 {
+                    //originalFilePath = originalFilePath.Substring(0, originalFilePath.LastIndexOf(@"\"));
+                    if(verbose == true)
+                    {
+                        Console.WriteLine($"Moving {movedFile} to {originalFilePath}");
+                    }
                     File.Move(movedFile, originalFilePath);
                 }
             }
+
+            foreach(string directory in createdDirectories)
+            {
+                if(Directory.EnumerateFiles(directory).Count() == 0)
+                {
+                    if (verbose == true)
+                    {
+                        Console.WriteLine($"Deleting directory: {directory}");
+                    }
+                    Directory.Delete(directory);
+                }
+                else
+                {
+                    Console.WriteLine($"There are files found in {directory}");
+                    Console.WriteLine("Not deleting this directory because of them.");
+                }
+            }
+
+            Console.WriteLine("Undo sort complete.");
+            movedFiles.Clear();
+            createdDirectories.Clear();
+
+            MainClass.IntroQuery();
         }
 
         public static void StoreFileTypeQuery(string filePath)
@@ -335,7 +375,8 @@ namespace Directory_Sorter
                     }
                 default:
                     {
-                        Console.WriteLine("That's not a 1, 2, or a 3.");
+                        Console.WriteLine();
+                        Console.WriteLine("Invalid input.");
                         StoreFileTypeQuery(filePath);
                         break;
                     }
@@ -385,8 +426,8 @@ namespace Directory_Sorter
             }
             else
             {
-                Console.WriteLine("That is not a valid path.");
                 Console.WriteLine();
+                Console.WriteLine("That is not a valid path.");
                 StoreFileTypeQuery(filePath);
             }
         }
@@ -395,12 +436,19 @@ namespace Directory_Sorter
         {
             try
             {
-                if(verbose == true)
+                if(movedFiles.ContainsKey(fileToMove))
+                {
+                    return false;
+                }
+
+                string destinationFilePath = destinationDirectory + $@"\{Path.GetFileName(fileToMove)}";
+                if (verbose == true)
                 {
                     Console.WriteLine($"Moving {Path.GetFullPath(fileToMove)} to {destinationDirectory}");
                 }
-                movedFiles.Add(Path.GetFullPath(fileToMove), destinationDirectory + $@"\{Path.GetFileName(fileToMove)}");
-                File.Move(fileToMove, destinationDirectory + $@"\{Path.GetFileName(fileToMove)}");
+
+                movedFiles.Add(destinationFilePath, Path.GetFullPath(fileToMove));
+                File.Move(fileToMove, destinationFilePath);
                 filesMoved++;
                 return true;
             }
@@ -434,7 +482,7 @@ namespace Directory_Sorter
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Press any key to return.");
             Console.ReadKey();
-            MainClass.DirectoryQuery();
+            MainClass.IntroQuery();
         }
 
         public static bool IsValidPath(string path, bool allowRelativePaths = false)
