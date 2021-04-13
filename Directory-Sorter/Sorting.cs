@@ -14,6 +14,7 @@ namespace Directory_Sorter
         public static bool verbose = true;
         public static bool recursive = false;
 
+        public static Dictionary<string, Exception> exceptionsEncountered = new Dictionary<string, Exception>();
         public static List<string> createdDirectories = new List<string>();
         public static Dictionary<string, string> movedFiles = new Dictionary<string, string>();
         public static List<string> recursiveFolderPaths = new List<string>();
@@ -166,31 +167,25 @@ namespace Directory_Sorter
         {
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
-                filesFound++;
+                FileFound(filePath);
                 string fileExtension = Path.GetExtension(filePath);
-
-                if (verbose == true)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)} in {Path.GetDirectoryName(filePath)}");
-                }
-
                 string pathToMoveTo = null;
+
                 if (fileTypeLocations.ContainsKey(fileExtension))
                 {
                     fileTypeLocations.TryGetValue(fileExtension, out pathToMoveTo);
-                    if (pathToMoveTo != "DO NOT MOVE")
+                    if (pathToMoveTo == "DO NOT MOVE")
                     {
-                        MoveFile(filePath, pathToMoveTo);
+                        IgnoreFile();
                     }
                     else
                     {
-                        filesIgnored++;
+                        MoveFile(filePath, pathToMoveTo);
                     }
                 }
                 else
                 {
-                    StoreFileTypeQuery(filePath);
+                    Dialog.StoreFileTypeQuery(filePath);
                 }
 
             }
@@ -207,8 +202,13 @@ namespace Directory_Sorter
 
         public static void StartDefaultSort(string directoryPath, bool recursive)
         {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Initializing...");
+            Console.ForegroundColor = ConsoleColor.White;
             DefaultSortInitialize();
 
+            Console.Clear();
             movedFiles.Clear();
             createdDirectories.Clear();
 
@@ -232,24 +232,24 @@ namespace Directory_Sorter
         {
             foreach (string filePath in Directory.EnumerateFiles(directoryPath))
             {
+                //we do this check here so that if somehow a file was moved around while we're sorting, we won't actually even mark it as found or move it
                 if (movedFiles.ContainsKey(filePath))
                 {
+                    if (verbose == true)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Already sorted this file before...that's weird I'm seeing it again.");
+                    }
                     break;
                 }
 
-                filesFound++;
+                FileFound(filePath);
                 string fileExtension = Path.GetExtension(filePath);
                 string destination = $@"{directoryPath}\{fileExtension} Folder";
 
                 if(recursive == true)
                 {
                     destination = $@"{initalDirectory}\{fileExtension} Folder";
-                }
-
-                if (verbose == true)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"Found file: {Path.GetFileName(filePath)}");
                 }
 
                 if (Directory.Exists(destination))
@@ -260,6 +260,11 @@ namespace Directory_Sorter
                 {
                     Directory.CreateDirectory(destination);
                     createdDirectories.Add(destination);
+                    if(verbose == true)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine($"Created directory: {destination}");
+                    }
                     MoveFile(filePath, destination);
                 }
             }
@@ -267,21 +272,28 @@ namespace Directory_Sorter
 
         public static void StartIsolateSort(string directoryPath, bool recursive)
         {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Initializing...");
+            Console.ForegroundColor = ConsoleColor.White;
             movedFiles.Clear();
             createdDirectories.Clear();
 
             initalDirectory = directoryPath;
 
-            IsolateSort(directoryPath);
-
-            if(recursive == true)
+            Console.Clear();
+            //we sort the initial subfolders found first because in isolate sort we create our own subfolders and we don't want to sort our subfolders that we made
+            if (recursive == true)
             {
                 RecursiveFolderSearch(directoryPath);
-                foreach(string path in recursiveFolderPaths)
+                foreach (string path in recursiveFolderPaths)
                 {
                     IsolateSort(path);
                 }
             }
+
+            IsolateSort(directoryPath);
+
             SortingFinished();
         }
 
@@ -297,165 +309,150 @@ namespace Directory_Sorter
             {
                 Console.WriteLine();
                 Console.WriteLine("No files have been sorted!");
-                MainClass.IntroQuery();
+                Dialog.IntroQuery();
             }
+
+            //moving files back where they came from
             foreach(string movedFile in movedFiles.Keys)
             {
                 movedFiles.TryGetValue(movedFile, out originalFilePath);
                 if(originalFilePath != null)
                 {
-                    //originalFilePath = originalFilePath.Substring(0, originalFilePath.LastIndexOf(@"\"));
                     if(verbose == true)
                     {
+                        Console.WriteLine();
                         Console.WriteLine($"Moving {movedFile} to {originalFilePath}");
                     }
                     File.Move(movedFile, originalFilePath);
                 }
             }
 
+            //cleaning up directories we made
             foreach(string directory in createdDirectories)
             {
                 if(Directory.EnumerateFiles(directory).Count() == 0)
                 {
                     if (verbose == true)
                     {
+                        Console.WriteLine();
                         Console.WriteLine($"Deleting directory: {directory}");
                     }
                     Directory.Delete(directory);
                 }
                 else
                 {
+                    Console.WriteLine();
                     Console.WriteLine($"There are files found in {directory}");
                     Console.WriteLine("Not deleting this directory because of them.");
                 }
             }
 
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine();
             Console.WriteLine("Undo sort complete.");
             movedFiles.Clear();
             createdDirectories.Clear();
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Press any key to continue.");
+            Console.ReadKey();
 
-            MainClass.IntroQuery();
+            Dialog.IntroQuery();
         }
 
-        public static void StoreFileTypeQuery(string filePath)
+        //i wasn't sure a short way to put this so that's why the method name is really long
+        //this is just the method that lists where certain file extensions should go to
+        public static void StoreFileExtensionDestination(string filePath, string directoryPath)
         {
-            Console.WriteLine();
-            Console.WriteLine($"Not sure where to put files of this type: {Path.GetExtension(filePath)} what would you like to do?");
-            Console.WriteLine($"1. Specify a folder to store it into. | 2. Ignore this particular file. | 3. Ignore ALL files that end with {Path.GetExtension(filePath)}");
-            Console.WriteLine();
-            switch(Console.ReadKey().Key)
+            if (Directory.Exists(directoryPath))
             {
-                case ConsoleKey.D1:
-                    {
-                        Console.WriteLine($"Enter a full path to the directory you want to move all {Path.GetExtension(filePath)} files to from here on.");
-                        Console.WriteLine();
-                        string path = Console.ReadLine();
-                        if (Directory.Exists(path))
-                        {
-                            fileTypeLocations.Add(Path.GetExtension(filePath), path);
-                            MoveFile(filePath, path);
-                        }
-                        else
-                        {
-                            DirectoryNotFound(filePath, path);
-                        }
-                        break;
-                    }
-
-                case ConsoleKey.D2:
-                    {
-                        filesIgnored++;
-                        break;
-                    }
-                case ConsoleKey.D3:
-                    {
-                        filesIgnored++;
-                        fileTypeLocations.Add(Path.GetExtension(filePath), "DO NOT MOVE");
-                        break;
-                    }
-                default:
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine("Invalid input.");
-                        StoreFileTypeQuery(filePath);
-                        break;
-                    }
-            }
-        }
-
-        public static void DirectoryNotFound(string filePath, string directory)
-        {
-            if(IsValidPath(directory))
-            {
-                Console.WriteLine($"{directory} is not an existing directory.");
-                Console.WriteLine("Would you like to create this directory?");
-                Console.WriteLine();
-                Console.WriteLine("1. Yes | 2. No");
-                switch (Console.ReadKey().Key)
-                {
-                    case ConsoleKey.D1:
-                        {
-                            try
-                            {
-                                Directory.CreateDirectory(directory);
-                                MoveFile(filePath, directory);
-                            }
-                            catch(Exception e)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine(e.Message);
-                                Console.ForegroundColor = ConsoleColor.White;
-                                Console.WriteLine("Press any key to retry.");
-                                Console.ReadKey();
-                                DirectoryNotFound(filePath, directory);
-                            }
-                            break;
-                        }
-                    case ConsoleKey.D2:
-                        {
-                            StoreFileTypeQuery(filePath);
-                            break;
-                        }
-                    default:
-                        {
-                            DirectoryNotFound(filePath, directory);
-                            break;
-                        }
-
-                }
+                fileTypeLocations.Add(Path.GetExtension(filePath), directoryPath);
+                MoveFile(filePath, directoryPath);
             }
             else
             {
-                Console.WriteLine();
-                Console.WriteLine("That is not a valid path.");
-                StoreFileTypeQuery(filePath);
+                Dialog.DirectoryNotFound(filePath, directoryPath);
             }
+        }
+
+        public static void FileFound(string filePath)
+        {
+            filesFound++;
+            if(verbose == true)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"File found: {filePath}");
+            }
+        }
+
+        public static void FileMoved(string fileToMove, string destination)
+        {
+            filesMoved++;
+            movedFiles.Add(destination, Path.GetFullPath(fileToMove));
+        }
+
+        public static void IgnoreFile()
+        {
+            filesIgnored++;
+            if(verbose == true)
+            {
+                Console.WriteLine();
+                Console.WriteLine("File ignored.");
+            }
+        }
+
+        public static void IgnoreFileType(string fileExtension)
+        {
+            fileTypeLocations.Add(fileExtension, "DO NOT MOVE");
+            if(verbose == true)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Added {fileExtension} files to ignore list.");
+            }
+        }
+
+        public static void ExceptionOccurred(string filePath, Exception e)
+        {
+            errors++;
+            exceptionsEncountered.Add(filePath, e);
+            Console.ForegroundColor = ConsoleColor.Red;
+            if(verbose == true)
+            {
+                Console.WriteLine();
+                Console.WriteLine(e.Message);
+            }
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         public static bool MoveFile(string fileToMove, string destinationDirectory)
         {
-            try
+            //just another check to make sure we don't move the same file twice if for some reason it gets moved mid-sort
+            if (movedFiles.ContainsKey(fileToMove))
             {
-                if(movedFiles.ContainsKey(fileToMove))
-                {
-                    return false;
-                }
-
-                string destinationFilePath = destinationDirectory + $@"\{Path.GetFileName(fileToMove)}";
                 if (verbose == true)
                 {
-                    Console.WriteLine($"Moving {Path.GetFullPath(fileToMove)} to {destinationDirectory}");
+                    Console.WriteLine();
+                    Console.WriteLine("Hmm...I've already moved this file.");
                 }
+                return false;
+            }
 
-                movedFiles.Add(destinationFilePath, Path.GetFullPath(fileToMove));
+            string destinationFilePath = destinationDirectory + $@"\{Path.GetFileName(fileToMove)}";
+
+            if (verbose == true)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Moving {Path.GetFullPath(fileToMove)} to {destinationDirectory}");
+            }
+
+            try
+            {
                 File.Move(fileToMove, destinationFilePath);
-                filesMoved++;
+                FileMoved(Path.GetFullPath(fileToMove), destinationFilePath);
                 return true;
             }
             catch(Exception e)
             {
-                errors++;
-                Console.WriteLine(e.Message);
+                ExceptionOccurred(fileToMove, e);
                 return false;
             }
         }
@@ -468,21 +465,29 @@ namespace Directory_Sorter
             Console.WriteLine($"Files found: {filesFound}");
             Console.WriteLine($"Files moved: {filesMoved}");
             Console.WriteLine($"Files ignored: {filesIgnored}");
-            if (errors < 1)
+            if (errors > 0)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Errors moving files: {errors}");
+                Console.ForegroundColor = ConsoleColor.White;
+                Dialog.ErrorsQuery();
             }
-            Console.WriteLine($"Errors moving files: {errors}");
+            else
+            {
+                Console.WriteLine($"Errors moving files: {errors}");
+            }
             filesFound = 0;
             filesMoved = 0;
             filesIgnored = 0;
             errors = 0;
             fileTypeLocations.Clear();
             recursiveFolderPaths.Clear();
+            exceptionsEncountered.Clear();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Press any key to return.");
             Console.ReadKey();
-            MainClass.IntroQuery();
+            Console.WriteLine();
+            Dialog.IntroQuery();
         }
 
         public static bool IsValidPath(string path, bool allowRelativePaths = false)
